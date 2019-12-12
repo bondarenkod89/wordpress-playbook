@@ -1,0 +1,52 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Determine required MySQL Python libraries.
+  set_fact:
+    deb_mysql_python_package: "{% if ansible_python.version.major == 3 %}python3-mysqldb{% else %}python-mysqldb{% endif %}"
+
+- name: Ensure MySQL Python libraries are installed.
+  apt: "name={{ deb_mysql_python_package }} state=present"
+
+- name: Install dependencies
+  apt: name={{ item }} state=present
+  with_items:
+    - apache2
+    - mysql-server
+    - php
+    - php-mysql
+    - libapache2-mod-php
+    - php-curl
+    - php-gd
+    - php-mbstring
+    - php-xml
+    - php-xmlrpc
+    - php-soap
+    - php-intl
+    - php-zip
+    - php-gd
+    - php-ssh2
+
+- name: Copy dir.conf
+  template:
+    src: templates/dir.conf.j2
+    dest: /etc/apache2/mods-available/dir.conf
+  notify:
+    - restart apache
+
+- name: Start the MySQL service
+  action: service name=mysql state=started
+
+- name: Create mysql database
+  mysql_db: name={{ wp_mysql_db }} state=present
+
+- name: Create mysql user
+  mysql_user:
+    name={{ wp_mysql_user }}
+    password={{ wp_mysql_password }}
+    priv=*.*:ALL
+  notify:
+    - restart mysql

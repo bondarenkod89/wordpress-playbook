@@ -1,0 +1,10 @@
+---
+- name: WordPress deployment playbook
+  gather_facts: true
+  hosts: wordpress
+  remote_user: bondarenko
+  become: True
+  become_method: sudo
+  roles:
+    - lamp
+    - wordpress
